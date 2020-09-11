@@ -35,7 +35,9 @@ namespace contrib {
 
 using namespace runtime;
 
-inline CBLAS_TRANSPOSE BooleanToTranspose(bool trans) { return trans ? CblasTrans : CblasNoTrans; }
+inline CBLAS_TRANSPOSE MKLBooleanToTranspose(bool trans) {
+  return trans ? CblasTrans : CblasNoTrans;
+}
 
 inline CBLAS_OFFSET StringToOffset(const std::string offset_type) {
   if (offset_type != "CblasFixOffset" && offset_type != "CblasColOffset" &&
@@ -50,13 +52,13 @@ inline CBLAS_OFFSET StringToOffset(const std::string offset_type) {
   return CblasRowOffset;
 }
 
-inline char BooleanToTransposeChar(bool trans) { return trans ? 'T' : 'N'; }
+inline char MKLBooleanToTransposeChar(bool trans) { return trans ? 'T' : 'N'; }
 
 struct MKLGemmU8S8S32Op {
   void operator()(bool ta, bool tb, int M, int N, int K, float alpha, const void* A, int lda,
                   int offset_a, const void* B, int ldb, int offset_b, float beta, int* C, int ldc,
                   const std::string offset_ctype, int* offset_c) {
-    cblas_gemm_s8u8s32(CblasColMajor, BooleanToTranspose(ta), BooleanToTranspose(tb),
+    cblas_gemm_s8u8s32(CblasColMajor, MKLBooleanToTranspose(ta), MKLBooleanToTranspose(tb),
                        StringToOffset(offset_ctype), M, N, K, alpha, A, lda, offset_a, B, ldb,
                        offset_b, beta, C, ldc, offset_c);
   }
@@ -66,8 +68,8 @@ struct MKLSgemmOp {
   typedef float TDatatype;
   void operator()(bool ta, bool tb, int M, int N, int K, float alpha, float* A, int lda, float* B,
                   int ldb, float beta, float* C, int ldc) {
-    cblas_sgemm(CblasColMajor, BooleanToTranspose(ta), BooleanToTranspose(tb), M, N, K, alpha, A,
-                lda, B, ldb, beta, C, ldc);
+    cblas_sgemm(CblasColMajor, MKLBooleanToTranspose(ta), MKLBooleanToTranspose(tb), M, N, K, alpha,
+                A, lda, B, ldb, beta, C, ldc);
   }
 };
 
@@ -75,8 +77,8 @@ struct MKLDgemmOp {
   typedef double TDatatype;
   void operator()(bool ta, bool tb, int M, int N, int K, double alpha, double* A, int lda,
                   double* B, int ldb, double beta, double* C, int ldc) {
-    cblas_dgemm(CblasColMajor, BooleanToTranspose(ta), BooleanToTranspose(tb), M, N, K, alpha, A,
-                lda, B, ldb, beta, C, ldc);
+    cblas_dgemm(CblasColMajor, MKLBooleanToTranspose(ta), MKLBooleanToTranspose(tb), M, N, K, alpha,
+                A, lda, B, ldb, beta, C, ldc);
   }
 };
 
@@ -85,8 +87,8 @@ struct MKLSgemmBatchOp {
   void operator()(int batch_size, bool ta, bool tb, int M, int N, int K, float alpha, float* A,
                   int a_stride, int lda, float* B, int b_stride, int ldb, float beta, float* C,
                   int c_stride, int ldc) {
-    CBLAS_TRANSPOSE trans_a = BooleanToTranspose(ta);
-    CBLAS_TRANSPOSE trans_b = BooleanToTranspose(tb);
+    CBLAS_TRANSPOSE trans_a = MKLBooleanToTranspose(ta);
+    CBLAS_TRANSPOSE trans_b = MKLBooleanToTranspose(tb);
     std::vector<const float*> A_array(batch_size);
     std::vector<const float*> B_array(batch_size);
     std::vector<float*> C_array(batch_size);
@@ -105,8 +107,8 @@ struct MKLSgemmBatchIterativeOp {
   void operator()(int batch_size, bool ta, bool tb, int M, int N, int K, float alpha, float* A,
                   int a_stride, int lda, float* B, int b_stride, int ldb, float beta, float* C,
                   int c_stride, int ldc) {
-    CBLAS_TRANSPOSE trans_a = BooleanToTranspose(ta);
-    CBLAS_TRANSPOSE trans_b = BooleanToTranspose(tb);
+    CBLAS_TRANSPOSE trans_a = MKLBooleanToTranspose(ta);
+    CBLAS_TRANSPOSE trans_b = MKLBooleanToTranspose(tb);
     for (int i = 0; i < batch_size; ++i) {
       cblas_sgemm(CblasColMajor, trans_a, trans_b, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
       A += a_stride;
@@ -121,8 +123,8 @@ struct MKLDgemmBatchOp {
   void operator()(int batch_size, bool ta, bool tb, int M, int N, int K, double alpha, double* A,
                   int a_stride, int lda, double* B, int b_stride, int ldb, double beta, double* C,
                   int c_stride, int ldc) {
-    CBLAS_TRANSPOSE trans_a = BooleanToTranspose(ta);
-    CBLAS_TRANSPOSE trans_b = BooleanToTranspose(tb);
+    CBLAS_TRANSPOSE trans_a = MKLBooleanToTranspose(ta);
+    CBLAS_TRANSPOSE trans_b = MKLBooleanToTranspose(tb);
     std::vector<const double*> A_array(batch_size);
     std::vector<const double*> B_array(batch_size);
     std::vector<double*> C_array(batch_size);
@@ -141,8 +143,8 @@ struct MKLDgemmBatchIterativeOp {
   void operator()(int batch_size, bool ta, bool tb, int M, int N, int K, double alpha, double* A,
                   int a_stride, int lda, double* B, int b_stride, int ldb, double beta, double* C,
                   int c_stride, int ldc) {
-    CBLAS_TRANSPOSE trans_a = BooleanToTranspose(ta);
-    CBLAS_TRANSPOSE trans_b = BooleanToTranspose(tb);
+    CBLAS_TRANSPOSE trans_a = MKLBooleanToTranspose(ta);
+    CBLAS_TRANSPOSE trans_b = MKLBooleanToTranspose(tb);
     for (int i = 0; i < batch_size; ++i) {
       cblas_dgemm(CblasColMajor, trans_a, trans_b, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
       A += a_stride;
